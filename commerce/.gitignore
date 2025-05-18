@@ -1,0 +1,10 @@
+.idea
+*.iml
+*.pyc
+__pycache__/
+
+build/
+dist/
+*.egg-info/
+
+.gradle

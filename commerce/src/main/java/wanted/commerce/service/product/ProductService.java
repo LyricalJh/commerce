@@ -1,4 +1,4 @@
-package wanted.commerce.service;
+package wanted.commerce.service.product;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,8 +10,11 @@ import wanted.commerce.entity.*;
 import wanted.commerce.exception.ResourceNotFoundException;
 import wanted.commerce.repository.*;
 import wanted.commerce.service.dto.PaginationDto;
-import wanted.commerce.service.dto.ProductDto;
 import wanted.commerce.service.mapper.ProductMapper;
+import wanted.commerce.service.product.command.ProductCommand;
+import wanted.commerce.service.product.command.ProductCommandHandler;
+import wanted.commerce.service.product.query.ProductQuery;
+import wanted.commerce.service.product.query.ProductQueryHandler;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,7 +23,7 @@ import static wanted.commerce.entity.ProductStatus.*;
 
 @Service
 @RequiredArgsConstructor
-public class ProductServiceImpl implements ProductService {
+public class ProductService implements ProductCommandHandler, ProductQueryHandler {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -31,24 +34,23 @@ public class ProductServiceImpl implements ProductService {
     private final ProductOptionRepository optionRepository;
     private final ProductImageRepository imageRepository;
     private final ProductMapper productMapper;
-    private final ProductImageRepository productImageRepository;
 
     @Override
     @Transactional
-    public ProductDto.Product createProduct(ProductDto.CreateRequest request) {
+    public ProductDto.Product createProduct(ProductCommand.CreateProduct command) {
         // 1. 기본 Product 엔티티 생성
-        Product product  = productMapper.toProductEntity(request);
+        Product product  = productMapper.toProductEntity(command);
 
         // 2. 연관 엔티티 설정
-        if (request.getSellerId() != null) {
-            Seller seller = sellerRepository.findById(request.getSellerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Seller", request.getSellerId()));
+        if (command.getSellerId() != null) {
+            Seller seller = sellerRepository.findById(command.getSellerId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Seller", command.getSellerId()));
             product.setSeller(seller);
         }
 
-        if (request.getBrandId() != null) {
-            Brand brand = brandRepository.findById(request.getBrandId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Brand", request.getBrandId()));
+        if (command.getBrandId() != null) {
+            Brand brand = brandRepository.findById(command.getBrandId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Brand", command.getBrandId()));
             product.setBrand(brand);
         }
 
@@ -57,20 +59,20 @@ public class ProductServiceImpl implements ProductService {
 
         // 4. 연관 관계 설정 및 저장
         // ProductDetail 설정 및 저장
-        if (request.getDetail() != null) {
-            ProductDetail detail = productMapper.toProductDetailEntity(request.getDetail(), product);
+        if (command.getDetail() != null) {
+            ProductDetail detail = productMapper.toProductDetailEntity(command.getDetail(), product);
             product.setDetail(detail);
         }
 
         // ProductPrice 생성 및 저장
-        if (request.getPrice() != null) {
-            ProductPrice price = productMapper.toProductPriceEntity(request.getPrice(), product);
+        if (command.getPrice() != null) {
+            ProductPrice price = productMapper.toProductPriceEntity(command.getPrice(), product);
             product.setPrice(price);
         }
 
         // 카테고리 연결
-        if (request.getCategories() != null && !request.getCategories().isEmpty()) {
-            List<Long> categoriesIds = request.getCategories().stream()
+        if (command.getCategories() != null && !command.getCategories().isEmpty()) {
+            List<Long> categoriesIds = command.getCategories().stream()
                     .map(ProductDto.ProductCategory::getCategoryId)
                     .toList();
 
@@ -79,14 +81,14 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // 태그 연결
-        if (request.getTagIds() != null && !request.getTagIds().isEmpty()) {
-            List<Tag> tags = tagRepository.findAllById(request.getTagIds());
+        if (command.getTagIds() != null && !command.getTagIds().isEmpty()) {
+            List<Tag> tags = tagRepository.findAllById(command.getTagIds());
             product.getTags().addAll(tags);
         }
 
         // 옵션 그룹 및 옵션 설정
-        if (request.getOptionGroups() != null) {
-            for (ProductDto.OptionGroup groupDto : request.getOptionGroups()) {
+        if (command.getOptionGroups() != null) {
+            for (ProductDto.OptionGroup groupDto : command.getOptionGroups()) {
                 ProductOptionGroup group = productMapper.toProductOptionGroupEntity(groupDto, product);
                 product.getOptionGroups().add(group);
 
@@ -101,8 +103,8 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // 이미지 생성
-        if (request.getImages() != null) {
-            for (ProductDto.Image imageDto : request.getImages()) {
+        if (command.getImages() != null) {
+            for (ProductDto.Image imageDto : command.getImages()) {
                 ProductOption option = null;
                 if (imageDto.getOptionId() != null) {
                     option = optionRepository.findById(imageDto.getOptionId())
@@ -119,33 +121,33 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductDto.Product updateProduct(Long productId, ProductDto.UpdateRequest request) {
-        Product product = productRepository.findById(productId)
-                .map(entity -> productMapper.updateProductEntity(request, entity))
-                .orElseThrow(() -> new ResourceNotFoundException("Product", productId));
+    public ProductDto.Product updateProduct(ProductCommand.UpdateProduct command) {
+        Product product = productRepository.findById(command.getProductId())
+                .map(entity -> productMapper.updateProductEntity(command, entity))
+                .orElseThrow(() -> new ResourceNotFoundException("Product", command.getProductId()));
 
         // 연관 엔티티 업데이트
-        if (request.getSellerId() != null) {
-            Seller seller  = sellerRepository.findById(request.getSellerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Seller", request.getSellerId()));
+        if (command.getSellerId() != null) {
+            Seller seller  = sellerRepository.findById(command.getSellerId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Seller", command.getSellerId()));
             product.setSeller(seller);
         }
 
-        if (request.getBrandId() != null) {
-            Brand brand = brandRepository.findById(request.getBrandId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Brand", request.getBrandId()));
+        if (command.getBrandId() != null) {
+            Brand brand = brandRepository.findById(command.getBrandId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Brand", command.getBrandId()));
             product.setBrand(brand);
         }
 
         // ProductDetail 업데이트
-        if (request.getDetail() != null && product.getDetail() != null) {
-            productMapper.updateProductDetailEntity(request.getDetail(), product.getDetail());
+        if (command.getDetail() != null && product.getDetail() != null) {
+            productMapper.updateProductDetailEntity(command.getDetail(), product.getDetail());
         }
 
         // 카테고리 업데이트
-        if (request.getCategories() != null) {
+        if (command.getCategories() != null) {
             product.getCategories().clear();
-            List<Long> categoryId = request.getCategories().stream()
+            List<Long> categoryId = command.getCategories().stream()
                     .map(ProductDto.ProductCategory::getCategoryId)
                     .toList();
             List<Category> categories = categoryRepository.findAllById(categoryId);
@@ -153,9 +155,9 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // 태그 업데이트
-        if (request.getTagIds() != null) {
+        if (command.getTagIds() != null) {
             product.getTags().clear();
-            List<Tag> tags = tagRepository.findAllById(request.getTagIds());
+            List<Tag> tags = tagRepository.findAllById(command.getTagIds());
             product.getTags().addAll(tags);
         }
 
@@ -167,9 +169,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public void deleteProduct(Long productId) {
-        Product product  = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", productId));
+    public void deleteProduct(ProductCommand.DeleteProduct command) {
+        Product product  = productRepository.findById(command.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product", command.getProductId()));
 
         // 소프트 삭제
         product.setStatus(DELETED);
@@ -181,7 +183,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductDto.Option addProductOption(Long productId, ProductDto.Option request) {
+    public ProductDto.Option addProductOption(ProductCommand.AddProductOption command) {
+        var productId = command.getProductId();
+        var request = command.getOption();
         var optionGroupId = request.getOptionGroupId();
 
         ProductOptionGroup optionGroup = optionGroupRepository.findById(optionGroupId)
@@ -197,8 +201,9 @@ public class ProductServiceImpl implements ProductService {
                 .optionGroupId(optionGroupId)
                 .name(optionGroup.getName())
                 .additionalPrice(request.getAdditionalPrice())
+                .sku(request.getSku())
                 .stock(request.getStock())
-                .displayOrder(optionGroup.getDisplayOrder())
+                .displayOrder(request.getDisplayOrder())
                 .build();
 
         // 옵션 엔티티 생성 및 저장.
@@ -210,7 +215,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductDto.Option updateProductOption(Long productId, ProductDto.Option request) {
+    public ProductDto.Option updateProductOption(ProductCommand.UpdateProductOption command) {
+        var productId = command.getProductId();
+        var request = command.getOption();
         var optionId = request.getId();
 
         ProductOption option = optionRepository.findById(optionId)
@@ -247,7 +254,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public void deleteProductOption(Long productId, Long optionId) {
+    public void deleteProductOption(ProductCommand.DeleteProductOption command) {
+        var productId = command.getProductId();
+        var optionId = command.getOptionId();
+
         ProductOption option = optionRepository.findById(optionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Option", optionId));
 
@@ -261,7 +271,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductDto.Image addProductImage(Long productId, ProductDto.Image request) {
+    public ProductDto.Image addProductImage(ProductCommand.AddProductImage command) {
+        var productId = command.getProductId();
+        var request = command.getImage();
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", productId));
 
@@ -284,8 +297,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    @Transactional
-    public ProductDto.Product getProductById(Long productId) {
+    @Transactional(readOnly = true)
+    public  ProductDto.Product getProduct(ProductQuery.GetProduct query) {
+        var productId = query.getProductId();
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", productId));
 
@@ -293,69 +308,69 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    @Transactional
-    public ProductListResponse getProducts(ProductDto.ListRequest request) {
+    @Transactional(readOnly = true)
+    public ProductListResponse getProducts(ProductQuery.ListProducts query) {
         // Specification 생성 및 조합
         Specification<Product> spec = Specification.where(null);
 
         // 상태 필터
-        if (request.getStatus() != null) {
-            spec = spec.and(ProductSpecification.withStatus(request.getStatus()));
+        if (query.getStatus() != null) {
+            spec = spec.and(ProductSpecification.withStatus(query.getStatus()));
         }
 
         // 가격 범위 필터
-        if (request.getMinPrice() != null) {
-            spec = spec.and(ProductSpecification.withMinPrice(request.getMinPrice()));
+        if (query.getMinPrice() != null) {
+            spec = spec.and(ProductSpecification.withMinPrice(query.getMinPrice()));
         }
 
-        if (request.getMaxPrice() != null) {
-            spec = spec.and(ProductSpecification.withMaxPrice(request.getMaxPrice()));
+        if (query.getMaxPrice() != null) {
+            spec = spec.and(ProductSpecification.withMaxPrice(query.getMaxPrice()));
         }
 
         // 카테고리 필터
-        if (request.getCategory() != null && !request.getCategory().isEmpty()) {
-            spec = spec.and(ProductSpecification.withCategoryId(request.getCategory()));
+        if (query.getCategory() != null && !query.getCategory().isEmpty()) {
+            spec = spec.and(ProductSpecification.withCategoryId(query.getCategory()));
         }
 
         // 판매자 필터
-        if (request.getSeller() != null) {
-            spec = spec.and(ProductSpecification.withSellerId(request.getSeller()));
+        if (query.getSeller() != null) {
+            spec = spec.and(ProductSpecification.withSellerId(query.getSeller()));
         }
 
         // 브랜드 필터
-        if (request.getBrand() != null) {
-            spec = spec.and(ProductSpecification.withBrandId(request.getBrand()));
+        if (query.getBrand() != null) {
+            spec = spec.and(ProductSpecification.withBrandId(query.getBrand()));
         }
 
         // 태크 필터
-        if (request.getTag() != null && !request.getTag().isEmpty()) {
-            spec = spec.and(ProductSpecification.withTagIds(request.getTag()));
+        if (query.getTag() != null && !query.getTag().isEmpty()) {
+            spec = spec.and(ProductSpecification.withTagIds(query.getTag()));
         }
 
         // 재고 여부 필터
-        if (request.getInStock() != null) {
-            spec = spec.and(ProductSpecification.inStock(request.getInStock()));
+        if (query.getInStock() != null) {
+            spec = spec.and(ProductSpecification.inStock(query.getInStock()));
         }
 
         // 검색어 필터
-        if (request.getSearch() != null && !request.getSearch().isEmpty()) {
-            spec = spec.and(ProductSpecification.withSearch(request.getSearch()));
+        if (query.getSearch() != null && !query.getSearch().isEmpty()) {
+            spec = spec.and(ProductSpecification.withSearch(query.getSearch()));
         }
 
         // 등록일 범위 필터
-        if (request.getCreatedFrom() != null) {
-            LocalDateTime fromDate = request.getCreatedFrom().atStartOfDay();
+        if (query.getCreatedFrom() != null) {
+            LocalDateTime fromDate = query.getCreatedFrom().atStartOfDay();
             spec = spec.and(ProductSpecification.withCreatedDateAfter(fromDate));
         }
 
-        if (request.getCreatedTo() != null) {
+        if (query.getCreatedTo() != null) {
             // 날짜의 끝 (23:59:59)으로 설정
-            LocalDateTime toDate = request.getCreatedTo().atStartOfDay().minusSeconds(1);
+            LocalDateTime toDate = query.getCreatedTo().atStartOfDay().minusSeconds(1);
             spec = spec.and(ProductSpecification.withCreatedDateBefore(toDate));
         }
 
         // 조회 실행
-        Page<Product> productPage = productRepository.findAll(spec, request.getPagination().toPageable());
+        Page<Product> productPage = productRepository.findAll(spec, query.getPagination().toPageable());
 
         // 결과 변환
         List<ProductDto.ProductSummary> productSummaries = productPage.stream()
@@ -366,8 +381,8 @@ public class ProductServiceImpl implements ProductService {
         PaginationDto.PaginationInfo paginationInfo = PaginationDto.PaginationInfo.builder()
                 .totalItems((int) productPage.getTotalElements())
                 .totalPages(productPage.getTotalPages())
-                .currentPage(request.getPagination().getPage())
-                .perPage(request.getPagination().getSize())
+                .currentPage(query.getPagination().getPage())
+                .perPage(query.getPagination().getSize())
                 .build();
 
         // 응답생성

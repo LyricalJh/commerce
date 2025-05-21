@@ -3,13 +3,15 @@ package wanted.commerce.controller.mapper;
 import org.springframework.stereotype.Component;
 import wanted.commerce.controller.dto.*;
 import wanted.commerce.service.dto.PaginationDto;
-import wanted.commerce.service.dto.ProductDto;
+import wanted.commerce.service.product.ProductDto;
+import wanted.commerce.service.product.command.ProductCommand;
+import wanted.commerce.service.product.query.ProductQuery;
 
 @Component
 public class ProductControllerMapper {
-    // Controller DTO - > Service DTO 매핑
-    public ProductDto.CreateRequest toProductDtoCreateRequest(ProductCreateRequest request) {
-        return ProductDto.CreateRequest.builder()
+    // Controller DTO → Service DTO 매핑
+    public ProductCommand.CreateProduct toCreateProductCommand(ProductCreateRequest request) {
+        return ProductCommand.CreateProduct.builder()
                 .name(request.getName())
                 .slug(request.getSlug())
                 .shortDescription(request.getShortDescription())
@@ -26,8 +28,9 @@ public class ProductControllerMapper {
                 .build();
     }
 
-    public ProductDto.UpdateRequest toServiceUpdateDto(ProductUpdateRequest request) {
-        return ProductDto.UpdateRequest.builder()
+    public ProductCommand.UpdateProduct toUpdateProductCommand(Long productId, ProductUpdateRequest request) {
+        return ProductCommand.UpdateProduct.builder()
+                .productId(productId)
                 .name(request.getName())
                 .slug(request.getSlug())
                 .shortDescription(request.getShortDescription())
@@ -129,8 +132,8 @@ public class ProductControllerMapper {
                 .build();
     }
 
-    public ProductDto.ListRequest toProductDtoListRequest(ProductListRequest request) {
-        return ProductDto.ListRequest.builder()
+    public ProductQuery.ListProducts toProductDtoListRequest(ProductListRequest request) {
+        return ProductQuery.ListProducts.builder()
                 .status(request.getStatus())
                 .minPrice(request.getMinPrice())
                 .maxPrice(request.getMaxPrice())
@@ -154,3 +157,4 @@ public class ProductControllerMapper {
                 .build();
     }
 }
+

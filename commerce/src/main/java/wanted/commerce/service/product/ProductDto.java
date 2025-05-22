@@ -91,6 +91,8 @@ public class ProductDto {
         private BigDecimal costPrice;
         private String currency;
         private BigDecimal taxRate;
+
+        @Builder.Default
         private Integer discountPercentage = 0;
     }
 

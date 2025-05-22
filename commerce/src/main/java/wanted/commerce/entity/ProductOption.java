@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "product_options")
@@ -40,7 +41,7 @@ public class ProductOption {
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
-    @OneToMany(mappedBy = "options", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "option", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProductImage> images = new ArrayList<>();
 }

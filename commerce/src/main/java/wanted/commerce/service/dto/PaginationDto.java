@@ -16,6 +16,8 @@ public class PaginationDto {
     public static class PaginationRequest {
         private int page;
         private int size;
+
+        @Builder.Default
         private String sort = "created_at:desc";
 
         public Pageable toPageable() {

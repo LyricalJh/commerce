@@ -1,4 +1,5 @@
 package wanted.commerce.service.query;
+import org.springframework.cache.annotation.Cacheable;
 import wanted.commerce.service.dto.MainPageDto;
 import wanted.commerce.service.query.entity.ProductDocument;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ public class MainPageQueryService implements MainPageQueryHandler {
     private final ProductDocumentMapper productDocumentMapper;
 
     @Override
+    @Cacheable(value = "mainPage")
     public MainPageDto.MainPage getMainPageContents() {
         // 1. 신규 상품 조회 (최근 등록순 5개)
         List<ProductDocument> newProducts = productDocumentOperations.findNewProducts(5);

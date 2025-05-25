@@ -2,6 +2,7 @@ package wanted.commerce.service.query;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,12 @@ public class ProductQueryService implements ProductQueryHandler {
     }
 
     @Override
+    @Cacheable(
+            value = "productList",
+            key = "#query",
+            condition = "#query.pagination.page == 1",
+            unless = "#result.items.size() == 0"
+    )
     public ProductListResponse getProducts(ProductQuery.ListProducts query) {
         // 1. Elasticsearch에서 조건에 맞는 상품 ID 목록 조회
         SearchHits<ProductSearchDocument> searchHits = productSearchOperations.searchProductsByConditions(query);
@@ -67,7 +74,7 @@ public class ProductQueryService implements ProductQueryHandler {
         // 4. 상품 정보를 DTO로 변환
         List<ProductDto.ProductSummary> productSummaries = productDocuments.stream()
                 .map(productDocumentMapper::toProductSummaryDto)
-                .collect(Collectors.toList());
+                .toList();
 
         // 5. Elasticsearch 검색 결과의 순서대로 정렬 (ID->객체 매핑)
         Map<Long, ProductDto.ProductSummary> productMap = productSummaries.stream()

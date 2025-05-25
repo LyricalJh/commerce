@@ -10,6 +10,7 @@ import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.UpdateQuery;
 import org.springframework.stereotype.Component;
+import wanted.commerce.query.sync.handler.AbstractCdcEventHandler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,12 +18,12 @@ import java.util.Optional;
 
 @Component
 @Slf4j
-public class ReviewEventHandler extends ProductSearchCdcEventHandler {
+public class ReviewSMEHandler extends AbstractCdcEventHandler {
 
     private final ProductSearchRepository productSearchRepository;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    public ReviewEventHandler(
+    public ReviewSMEHandler(
             ObjectMapper objectMapper,
             ProductSearchRepository productSearchRepository,
             ElasticsearchOperations elasticsearchOperations) {

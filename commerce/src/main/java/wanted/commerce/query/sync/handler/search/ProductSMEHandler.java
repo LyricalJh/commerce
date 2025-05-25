@@ -6,17 +6,18 @@ import org.springframework.stereotype.Component;
 import wanted.commerce.query.search.ProductSearchDocument;
 import wanted.commerce.query.search.ProductSearchRepository;
 import wanted.commerce.query.sync.CdcEvent;
+import wanted.commerce.query.sync.handler.AbstractCdcEventHandler;
 
 import java.util.Map;
 import java.util.Optional;
 
 @Component
 @Slf4j
-public class ProductEventHandler extends ProductSearchCdcEventHandler {
+public class ProductSMEHandler extends AbstractCdcEventHandler {
 
     private final ProductSearchRepository productSearchRepository;
 
-    public ProductEventHandler(ObjectMapper objectMapper, ProductSearchRepository productSearchRepository) {
+    public ProductSMEHandler(ObjectMapper objectMapper, ProductSearchRepository productSearchRepository) {
         super(objectMapper);
         this.productSearchRepository = productSearchRepository;
     }

@@ -1,33 +1,38 @@
 package wanted.commerce.query.sync.handler.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import wanted.commerce.query.search.ProductSearchDocument;
+import wanted.commerce.query.search.ProductSearchRepository;
+import wanted.commerce.query.sync.CdcEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.UpdateQuery;
-import wanted.commerce.query.sync.CdcEvent;
+import org.springframework.stereotype.Component;
+import wanted.commerce.query.sync.handler.AbstractCdcEventHandler;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @Slf4j
-public class ProductPriceEventHandler extends ProductSearchCdcEventHandler {
+public class ProductTagSMEHandler extends AbstractCdcEventHandler {
 
+    private final ProductSearchRepository productSearchRepository;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    public ProductPriceEventHandler(
+    public ProductTagSMEHandler(
             ObjectMapper objectMapper,
+            ProductSearchRepository productSearchRepository,
             ElasticsearchOperations elasticsearchOperations) {
         super(objectMapper);
+        this.productSearchRepository = productSearchRepository;
         this.elasticsearchOperations = elasticsearchOperations;
     }
 
     @Override
     protected String getSupportedTable() {
-        return "product_prices";
+        return "product_tags";
     }
 
     @Override
@@ -41,33 +46,41 @@ public class ProductPriceEventHandler extends ProductSearchCdcEventHandler {
             data = event.getAfterData();
         }
 
-        if (data == null || !data.containsKey("product_id")) {
+        if (data == null || !data.containsKey("product_id") || !data.containsKey("tag_id")) {
             return;
         }
 
         productId = getLongValue(data, "product_id");
+        Long tagId = getLongValue(data, "tag_id");
 
-        // 삭제 이벤트 처리
-        if (event.isDelete()) {
-            Map<String, Object> updates = new HashMap<>();
-            updates.put("basePrice", null);
-            updates.put("salePrice", null);
-            updatePartialDocument(productId, updates);
+        // 태그 목록을 조회해야 함 - 기존 문서 필요
+        Optional<ProductSearchDocument> optionalDocument = productSearchRepository.findById(productId);
+        if (optionalDocument.isEmpty()) {
+            log.warn("Product document not found for tag update: {}", productId);
             return;
         }
 
-        // 부분 업데이트로 처리
-        Map<String, Object> updates = new HashMap<>();
+        ProductSearchDocument document = optionalDocument.get();
 
-        if (data.containsKey("base_price")) {
-            updates.put("basePrice", getBigDecimalValue(data, "base_price"));
+        // 기존 태그 목록 가져오기
+        List<Long> tagIds = document.getTagIds();
+        if (tagIds == null) {
+            tagIds = new ArrayList<>();
         }
 
-        if (data.containsKey("sale_price")) {
-            updates.put("salePrice", getBigDecimalValue(data, "sale_price"));
+        // 태그 매핑 추가 또는 제거
+        boolean updated = false;
+        if (event.isDelete()) {
+            updated = tagIds.remove(tagId);
+        } else if (!tagIds.contains(tagId)) {
+            tagIds.add(tagId);
+            updated = true;
         }
 
-        if (!updates.isEmpty()) {
+        // 변경된 경우에만 업데이트
+        if (updated) {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("tagIds", tagIds);
             updatePartialDocument(productId, updates);
         }
     }
@@ -91,9 +104,9 @@ public class ProductPriceEventHandler extends ProductSearchCdcEventHandler {
                     .build();
 
             elasticsearchOperations.update(updateQuery, IndexCoordinates.of("products"));
-            log.debug("Partially updated product price: {}", productId);
+            log.debug("Partially updated product tags: {}", productId);
         } catch (Exception e) {
-            log.error("Error updating product price {}: {}", productId, e.getMessage());
+            log.error("Error updating product tags {}: {}", productId, e.getMessage());
         }
     }
 }

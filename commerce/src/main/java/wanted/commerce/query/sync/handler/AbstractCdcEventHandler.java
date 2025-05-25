@@ -30,6 +30,23 @@ public abstract class AbstractCdcEventHandler implements CdcEventHandler {
         return data.containsKey(key) && data.get(key) != null ? data.get(key).toString() : null;
     }
 
+    protected Double getDoubleValue(Map<String, Object> data, String key) {
+        if (data.containsKey(key) && data.get(key) != null) {
+            Object value = data.get(key);
+            if (value instanceof Number) {
+                return ((Number) value).doubleValue();
+            } else {
+                try {
+                    return Double.valueOf(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+
     protected Long getLongValue(Map<String, Object> data, String key) {
         if (data.containsKey(key) && data.get(key) != null) {
             Object value = data.get(key);

@@ -1,37 +1,33 @@
 package wanted.commerce.query.sync.handler.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import wanted.commerce.query.search.ProductSearchDocument;
-import wanted.commerce.query.search.ProductSearchRepository;
-import wanted.commerce.query.sync.CdcEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.stereotype.Component;
+import wanted.commerce.query.sync.CdcEvent;
+import wanted.commerce.query.sync.handler.AbstractCdcEventHandler;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.UpdateQuery;
-import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @Slf4j
-public class ProductTagEventHandler extends ProductSearchCdcEventHandler {
+public class ProductDetailSMEHandler extends AbstractCdcEventHandler {
 
-    private final ProductSearchRepository productSearchRepository;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    public ProductTagEventHandler(
+    public ProductDetailSMEHandler(
             ObjectMapper objectMapper,
-            ProductSearchRepository productSearchRepository,
             ElasticsearchOperations elasticsearchOperations) {
         super(objectMapper);
-        this.productSearchRepository = productSearchRepository;
         this.elasticsearchOperations = elasticsearchOperations;
     }
-
     @Override
     protected String getSupportedTable() {
-        return "product_tags";
+        return "product_details";
     }
 
     @Override
@@ -45,41 +41,24 @@ public class ProductTagEventHandler extends ProductSearchCdcEventHandler {
             data = event.getAfterData();
         }
 
-        if (data == null || !data.containsKey("product_id") || !data.containsKey("tag_id")) {
+        if (data == null || !data.containsKey("product_id")) {
             return;
         }
 
         productId = getLongValue(data, "product_id");
-        Long tagId = getLongValue(data, "tag_id");
 
-        // 태그 목록을 조회해야 함 - 기존 문서 필요
-        Optional<ProductSearchDocument> optionalDocument = productSearchRepository.findById(productId);
-        if (optionalDocument.isEmpty()) {
-            log.warn("Product document not found for tag update: {}", productId);
+        // 삭제 이벤트 처리
+        if (event.isDelete()) {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("materials", null);
+            updatePartialDocument(productId, updates);
             return;
         }
 
-        ProductSearchDocument document = optionalDocument.get();
-
-        // 기존 태그 목록 가져오기
-        List<Long> tagIds = document.getTagIds();
-        if (tagIds == null) {
-            tagIds = new ArrayList<>();
-        }
-
-        // 태그 매핑 추가 또는 제거
-        boolean updated = false;
-        if (event.isDelete()) {
-            updated = tagIds.remove(tagId);
-        } else if (!tagIds.contains(tagId)) {
-            tagIds.add(tagId);
-            updated = true;
-        }
-
-        // 변경된 경우에만 업데이트
-        if (updated) {
+        // 부분 업데이트로 처리
+        if (data.containsKey("materials")) {
             Map<String, Object> updates = new HashMap<>();
-            updates.put("tagIds", tagIds);
+            updates.put("materials", getStringValue(data, "materials"));
             updatePartialDocument(productId, updates);
         }
     }
@@ -95,7 +74,7 @@ public class ProductTagEventHandler extends ProductSearchCdcEventHandler {
             Document document = Document.create();
 
             // 각 필드를 Document에 추가
-            updates.forEach(document::put);
+            document.putAll(updates);
 
             UpdateQuery updateQuery = UpdateQuery.builder(productId.toString())
                     .withDocument(document)
@@ -103,9 +82,9 @@ public class ProductTagEventHandler extends ProductSearchCdcEventHandler {
                     .build();
 
             elasticsearchOperations.update(updateQuery, IndexCoordinates.of("products"));
-            log.debug("Partially updated product tags: {}", productId);
+            log.debug("Partially updated product detail: {}", productId);
         } catch (Exception e) {
-            log.error("Error updating product tags {}: {}", productId, e.getMessage());
+            log.error("Error updating product detail {}: {}", productId, e.getMessage());
         }
     }
 }

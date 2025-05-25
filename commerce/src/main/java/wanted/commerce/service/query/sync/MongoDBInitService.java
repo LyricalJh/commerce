@@ -80,6 +80,4 @@ public class MongoDBInitService {
         mongoTemplate.indexOps(CategoryDocument.class)
                 .ensureIndex(new Index().on("parent.id", Sort.Direction.ASC).named("category_parent_idx"));
     }
-
-
 }

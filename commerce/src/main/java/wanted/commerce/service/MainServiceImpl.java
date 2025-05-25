@@ -3,11 +3,11 @@ package wanted.commerce.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import wanted.commerce.entity.Category;
-import wanted.commerce.entity.Product;
-import wanted.commerce.entity.ProductStatus;
-import wanted.commerce.repository.CategoryRepository;
-import wanted.commerce.repository.ProductRepository;
+import wanted.commerce.service.entity.Category;
+import wanted.commerce.service.entity.Product;
+import wanted.commerce.service.entity.ProductStatus;
+import wanted.commerce.service.repository.CategoryRepository;
+import wanted.commerce.service.repository.ProductRepository;
 import wanted.commerce.service.dto.MainPageDto;
 import wanted.commerce.service.mapper.ProductMapper;
 

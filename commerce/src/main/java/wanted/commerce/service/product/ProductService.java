@@ -6,20 +6,16 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import wanted.commerce.controller.dto.ProductListResponse;
-import wanted.commerce.entity.*;
 import wanted.commerce.exception.ResourceNotFoundException;
-import wanted.commerce.repository.*;
 import wanted.commerce.service.dto.PaginationDto;
+import wanted.commerce.service.entity.*;
 import wanted.commerce.service.mapper.ProductMapper;
-import wanted.commerce.service.product.command.ProductCommand;
-import wanted.commerce.service.product.command.ProductCommandHandler;
-import wanted.commerce.service.product.query.ProductQuery;
-import wanted.commerce.service.product.query.ProductQueryHandler;
+import wanted.commerce.service.query.ProductQuery;
+import wanted.commerce.service.query.ProductQueryHandler;
+import wanted.commerce.service.repository.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static wanted.commerce.entity.ProductStatus.*;
 
 @Service
 @RequiredArgsConstructor

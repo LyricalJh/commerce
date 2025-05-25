@@ -5,9 +5,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import wanted.commerce.entity.*;
+import wanted.commerce.service.entity.*;
 import wanted.commerce.service.product.ProductDto;
-import wanted.commerce.service.product.command.ProductCommand;
+import wanted.commerce.service.product.ProductCommand;
 
 import java.util.HashMap;
 import java.util.Map;

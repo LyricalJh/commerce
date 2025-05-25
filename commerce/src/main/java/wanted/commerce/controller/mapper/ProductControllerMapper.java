@@ -4,8 +4,8 @@ import org.springframework.stereotype.Component;
 import wanted.commerce.controller.dto.*;
 import wanted.commerce.service.dto.PaginationDto;
 import wanted.commerce.service.product.ProductDto;
-import wanted.commerce.service.product.command.ProductCommand;
-import wanted.commerce.service.product.query.ProductQuery;
+import wanted.commerce.service.product.ProductCommand;
+import wanted.commerce.service.query.ProductQuery;
 
 @Component
 public class ProductControllerMapper {

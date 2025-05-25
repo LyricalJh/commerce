@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import wanted.commerce.controller.dto.*;
 import wanted.commerce.controller.mapper.ProductControllerMapper;
 import wanted.commerce.service.product.ProductDto;
-import wanted.commerce.service.product.command.ProductCommand;
-import wanted.commerce.service.product.command.ProductCommandHandler;
-import wanted.commerce.service.product.query.ProductQuery;
-import wanted.commerce.service.product.query.ProductQueryHandler;
+import wanted.commerce.service.product.ProductCommand;
+import wanted.commerce.service.product.ProductCommandHandler;
+import wanted.commerce.service.query.ProductQuery;
+import wanted.commerce.service.query.ProductQueryHandler;
 
 @RestController
 @RequestMapping("/api/products")

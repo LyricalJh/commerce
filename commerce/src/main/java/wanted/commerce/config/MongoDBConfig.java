@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @Configuration
-@EnableMongoRepositories(basePackages = "wanted.commerce.query.document")
+@EnableMongoRepositories(basePackages = "wanted.commerce.service.query.repository")
 public class MongoDBConfig {
 
     @Value("${spring.mongodb.host}")

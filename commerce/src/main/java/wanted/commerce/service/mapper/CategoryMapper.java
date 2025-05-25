@@ -2,7 +2,7 @@ package wanted.commerce.service.mapper;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
-import wanted.commerce.entity.Category;
+import wanted.commerce.service.entity.Category;
 import wanted.commerce.service.dto.CategoryDto;
 import wanted.commerce.service.dto.PaginationDto;
 

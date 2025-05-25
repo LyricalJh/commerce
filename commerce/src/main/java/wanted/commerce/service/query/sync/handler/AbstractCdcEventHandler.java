@@ -46,18 +46,16 @@ public abstract class AbstractCdcEventHandler implements CdcEventHandler {
         return null;
     }
 
-
     protected Long getLongValue(Map<String, Object> data, String key) {
-        if (data.containsKey(key) && data.get(key) != null) {
-            Object value = data.get(key);
-            if (value instanceof Number) {
-                return ((Number) value).longValue();
-            } else {
-                try {
-                    return Long.valueOf(value.toString());
-                } catch (NumberFormatException e) {
-                    return null;
-                }
+        Object value = data.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        } else if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (NumberFormatException e) {
+                log.warn("Cannot parse Long from string value for key '{}': {}", key, value);
+                return null;
             }
         }
         return null;

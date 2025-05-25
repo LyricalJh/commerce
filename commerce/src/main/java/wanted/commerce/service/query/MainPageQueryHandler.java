@@ -1,7 +1,7 @@
-package wanted.commerce.service;
+package wanted.commerce.service.query;
 
 import wanted.commerce.service.dto.MainPageDto;
 
-public interface MainService {
+public interface MainPageQueryHandler {
     MainPageDto.MainPage getMainPageContents();
 }

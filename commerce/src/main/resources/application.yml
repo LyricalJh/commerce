@@ -3,7 +3,7 @@ spring:
     name: commerce
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5432/challenge
     username: REDACTED
     password: REDACTED
   jpa:
@@ -12,11 +12,30 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        default_schema: wanted
     #        default_batch_fetch_size: 100
     open-in-view: false
-
-
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      group-id: product-query-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  elasticsearch:
+    host: localhost
+    port: 9200
+  mongodb:
+    host: localhost
+    port: 27017
+    username: admin
+    password: REDACTED
+    database: challenge
+  cache:
+    type: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
 logging:
   level:
     org.hibernate.SQL: debug

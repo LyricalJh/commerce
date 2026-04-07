@@ -5,8 +5,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import wanted.commerce.entity.*;
-import wanted.commerce.service.dto.ProductDto;
+import wanted.commerce.service.entity.*;
+import wanted.commerce.service.product.ProductDto;
+import wanted.commerce.service.product.ProductCommand;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,20 +19,20 @@ public class ProductMapper {
 
     private final ObjectMapper om;
 
-    public Product toProductEntity(ProductDto.CreateRequest request) {
+    public Product toProductEntity(ProductCommand.CreateProduct command) {
         return Product.builder()
-                .name(request.getName())
-                .slug(request.getSlug())
-                .shortDescription(request.getShortDescription())
-                .fullDescription(request.getFullDescription())
-                .status(ProductStatus.valueOf(request.getStatus()))
+                .name(command.getName())
+                .slug(command.getSlug())
+                .shortDescription(command.getShortDescription())
+                .fullDescription(command.getFullDescription())
+                .status(ProductStatus.valueOf(command.getStatus()))
                 .build();
     }
 
     public ProductDetail toProductDetailEntity(ProductDto.Detail detail, Product product) {
         return ProductDetail.builder()
                 .product(product)
-                .weight(detail.getWeight())
+                .weight(detail.getWeight().doubleValue())
                 .dimensions(convertMapToJsonString(detail.getDimensions()))
                 .materials(detail.getMaterials())
                 .countryOfOrigin(detail.getCountryOfOrigin())
@@ -81,21 +82,21 @@ public class ProductMapper {
                 .build();
     }
 
-    public Product updateProductEntity(ProductDto.UpdateRequest request, Product product) {
-        if (request.getName() != null) {
-            product.setName(request.getName());
+    public Product updateProductEntity(ProductCommand.UpdateProduct command, Product product) {
+        if (command.getName() != null) {
+            product.setName(command.getName());
         }
-        if (request.getSlug() != null) {
-            product.setSlug(request.getSlug());
+        if (command.getSlug() != null) {
+            product.setSlug(command.getSlug());
         }
-        if (request.getShortDescription() != null) {
-            product.setShortDescription(request.getShortDescription());
+        if (command.getShortDescription() != null) {
+            product.setShortDescription(command.getShortDescription());
         }
-        if (request.getFullDescription() != null) {
-            product.setFullDescription(request.getFullDescription());
+        if (command.getFullDescription() != null) {
+            product.setFullDescription(command.getFullDescription());
         }
-        if (request.getStatus() != null) {
-            product.setStatus(ProductStatus.valueOf(request.getStatus()));
+        if (command.getStatus() != null) {
+            product.setStatus(ProductStatus.valueOf(command.getStatus()));
         }
         return product;
     }

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import wanted.commerce.service.dto.PaginationDto;
-import wanted.commerce.service.dto.ProductDto;
+import wanted.commerce.service.product.ProductDto;
 
 import java.util.List;
 

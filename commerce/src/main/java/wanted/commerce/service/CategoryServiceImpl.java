@@ -4,11 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import wanted.commerce.entity.Category;
-import wanted.commerce.entity.Product;
+import wanted.commerce.service.entity.Category;
+import wanted.commerce.service.entity.Product;
 import wanted.commerce.exception.ResourceNotFoundException;
-import wanted.commerce.repository.CategoryRepository;
-import wanted.commerce.repository.ProductRepository;
+import wanted.commerce.service.repository.CategoryRepository;
+import wanted.commerce.service.repository.ProductRepository;
 import wanted.commerce.service.dto.CategoryDto;
 import wanted.commerce.service.dto.PaginationDto;
 import wanted.commerce.service.mapper.CategoryMapper;
@@ -136,7 +136,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         // 카테고리 ID -> 카테고리 매핑
         Map<Long, Category> categoryMap = allCategories.stream()
-                .collect(Collectors.toMap(wanted.commerce.entity.Category::getId, c -> c));
+                .collect(Collectors.toMap(Category::getId, c -> c));
 
         // 부모 ID -> 자식 카테고리 리스트 매핑
         Map<Long, List<Category>> childrenMap = new HashMap<>();

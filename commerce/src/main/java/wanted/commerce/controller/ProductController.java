@@ -7,29 +7,37 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import wanted.commerce.controller.dto.*;
 import wanted.commerce.controller.mapper.ProductControllerMapper;
-import wanted.commerce.service.ProductService;
-import wanted.commerce.service.dto.ProductDto;
+import wanted.commerce.service.product.ProductDto;
+import wanted.commerce.service.product.ProductCommand;
+import wanted.commerce.service.product.ProductCommandHandler;
+import wanted.commerce.service.query.ProductQuery;
+import wanted.commerce.service.query.ProductQueryHandler;
 
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductService productService;
+    private final ProductCommandHandler productCommandHandler;
+    private final ProductQueryHandler productQueryHandler;
     private final ProductControllerMapper mapper;
 
     @PostMapping
     public ResponseEntity<ApiResponse<ProductDto.Product>> createProduct(
             @RequestBody ProductCreateRequest request
     ) {
-        ProductDto.CreateRequest createRequest = mapper.toProductDtoCreateRequest(request);
-        ProductDto.Product createdProduct = productService.createProduct(createRequest);
+        ProductCommand.CreateProduct createRequest = mapper.toCreateProductCommand(request);
+        ProductDto.Product createdProduct = productCommandHandler.createProduct(createRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(createdProduct, "상품이 성공적으로 등록되었습니다."));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductDto.Product>> getProduct(@PathVariable Long id) {
-        ProductDto.Product foundProduct = productService.getProductById(id);
+        ProductQuery.GetProduct query = ProductQuery.GetProduct.builder()
+                .productId(id)
+                .build();
+
+        ProductDto.Product foundProduct = productQueryHandler.getProduct(query);
         return ResponseEntity.ok(ApiResponse.success(foundProduct, "상품 상세 정보를 성공적으로 조회했습니다."));
     }
 
@@ -38,14 +46,18 @@ public class ProductController {
             @PathVariable Long id,
             @RequestBody ProductUpdateRequest request
     ) {
-        ProductDto.UpdateRequest updateRequest = mapper.toServiceUpdateDto(request);
-        ProductDto.Product updatedProduct = productService.updateProduct(id, updateRequest);
+        ProductCommand.UpdateProduct command = mapper.toUpdateProductCommand(id, request);
+        ProductDto.Product updatedProduct = productCommandHandler.updateProduct(command);
         return ResponseEntity.ok(ApiResponse.success(updatedProduct, "상품이 성공적으로 수정되었습니다"));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
+        ProductCommand.DeleteProduct command = ProductCommand.DeleteProduct.builder()
+                .productId(id)
+                .build();
+
+        productCommandHandler.deleteProduct(command);
         return ResponseEntity.ok(ApiResponse.success(null, "상품이 성공적으로 삭제되었습니다."));
     }
 
@@ -55,8 +67,12 @@ public class ProductController {
             @RequestParam Long optionGroupId,
             @RequestBody ProductOptionRequest request
     ) {
-        ProductDto.Option createRequest = mapper.toProductDtoOptionWithOptionGroupId(optionGroupId, request);
-        ProductDto.Option createdOption = productService.addProductOption(id, createRequest);
+        ProductCommand.AddProductOption command = ProductCommand.AddProductOption.builder()
+                .productId(id)
+                .option(mapper.toProductDtoOptionWithOptionGroupId(optionGroupId, request))
+                .build();
+
+        ProductDto.Option createdOption = productCommandHandler.addProductOption(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(createdOption, "상품 옵션이 성공적으로 추가되었습니다."));
     }
 
@@ -66,8 +82,12 @@ public class ProductController {
             @PathVariable Long optionId,
             @RequestBody ProductOptionRequest request
     ) {
-        ProductDto.Option updateRequest = mapper.toProductDtoOptionOptionId(optionId, request);
-        ProductDto.Option updatedOption = productService.updateProductOption(id, updateRequest);
+        ProductCommand.UpdateProductOption command = ProductCommand.UpdateProductOption.builder()
+                .productId(id)
+                .option(mapper.toProductDtoOptionOptionId(optionId, request))
+                .build();
+
+        ProductDto.Option updatedOption = productCommandHandler.updateProductOption(command);
         return ResponseEntity.ok(ApiResponse.success(updatedOption, "상품 옵션이 성공적으로 수정되었습니다."));
     }
 
@@ -76,7 +96,11 @@ public class ProductController {
             @PathVariable Long id,
             @PathVariable Long optionId
     ) {
-        productService.deleteProductOption(id, optionId);
+        ProductCommand.DeleteProductOption command = ProductCommand.DeleteProductOption.builder()
+                .productId(id)
+                .optionId(optionId)
+                .build();
+        productCommandHandler.deleteProductOption(command);
         return ResponseEntity.ok(ApiResponse.success(null, "상품 옵션이 성공적으로 삭제되었습니다."));
     }
 
@@ -85,15 +109,20 @@ public class ProductController {
             @PathVariable Long id,
             @RequestBody ProductImageRequest request
     ) {
-        ProductDto.Image createRequest = mapper.toProductDtoImage(request);
-        ProductDto.Image createdImage = productService.addProductImage(id, createRequest);
+        ProductCommand.AddProductImage command = ProductCommand.AddProductImage.builder()
+                .productId(id)
+                .image(mapper.toProductDtoImage(request))
+                .build();
+
+        ProductDto.Image createdImage = productCommandHandler.addProductImage(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(createdImage, "상품 이미지가 성공적으로 추가되었습니다."));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<ProductListResponse>> getProducts(@ParameterObject ProductListRequest request) {
+        ProductQuery.ListProducts query = mapper.toProductDtoListRequest(request);
         return ResponseEntity.ok(ApiResponse.success(
-                productService.getProducts(mapper.toProductDtoListRequest(request)),
+                productQueryHandler.getProducts(query),
                 "상품 목록을 성공적으로 조회했습니다."
         ));
     }

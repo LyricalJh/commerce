@@ -1,0 +1,13 @@
+# Local environment variables (never commit real secrets)
+.env
+.env.local
+*.env
+!.env.example
+
+# Tooling state (local only)
+.bkit/
+.claude/
+
+# IDE / misc
+.idea/
+*.iml
